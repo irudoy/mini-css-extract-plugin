@@ -182,13 +182,23 @@ export function pitch(request) {
     }
 
     let resultSource = `// extracted by ${pluginName}`;
-    const result = locals
-      ? `\nmodule.exports = ${JSON.stringify(locals)};`
-      : '';
+    let extracted = true;
 
-    resultSource += options.hmr
-      ? hotLoader(result, { context: this.context, options, locals })
-      : result;
+    if (locals) {
+      resultSource += `\nmodule.exports = ${JSON.stringify(locals)};`;
+      extracted = false;
+    }
+
+    if (options.hmr) {
+      resultSource = hotLoader(resultSource, {
+        context: this.context,
+        options,
+        locals,
+      });
+      extracted = false;
+    }
+
+    this._module.buildMeta = { ...this._module.buildMeta, extracted };
 
     return callback(null, resultSource);
   });
